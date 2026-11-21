@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Virtual environment
+.env
+.env.*
+.venv
+
+# Cache 
+__pycache__
+.pytest_cache
+
+# Tests
+tests
+
+# Docs
+*.md

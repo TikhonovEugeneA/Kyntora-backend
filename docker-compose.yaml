@@ -1,0 +1,40 @@
+name: kyntora-backend
+
+services:
+  auth-service-db:
+    container_name: auth-service-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${AUTH_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${AUTH_DB_NAME:-auth_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  auth-service-api:
+    container_name: auth-service-api
+    build:
+      context: ./auth-service
+    restart: unless-stopped
+    env_file:
+      - ./auth-service/.env
+    environment:
+      APP_CONFIG__DATABASE__URL: postgresql+asyncpg://${AUTH_DB_USER:-postgres}:${AUTH_DB_PASSWORD:-postgres}@auth-service-db:5432/${AUTH_DB_NAME:-auth_db}
+    ports:
+      - "8001:8000"
+    depends_on:
+      auth-service-db:
+        condition: service_healthy
+        restart: true
+
+volumes:
+  auth_pgdata:
